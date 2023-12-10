@@ -61,11 +61,11 @@ class TinkerApp(tk.Tk):
         h *= inc_h; w *= inc_w
         h = int(h); w = int(w)
         self.maxsize(w, h)
+        self.after_idle(self.ws_server_process)
 
 
     def mainloop(self, n: int = 0) -> None:
         self.after(500, self.on_start)
-        self.after_idle(self.ws_server_process)
         return super().mainloop(n)
     
     async def ws_server_process(self):
@@ -78,15 +78,18 @@ class TinkerApp(tk.Tk):
                     self.slider.set(float(vol))
                 elif m == "get-vol":
                     ws.send("vol:" + str(int(self.slider.get())) )
-                    
+        
+        print("test")
         self.server = await websockets.serve(handler, "localhost", 13337)
+        logging.info("Launched WS server")
 
 if __name__ == "__main__":
     argc, argv = (len(sys.argv), sys.argv)
 
     logging.basicConfig(
         filename="spotify-slider.log",
-        format='%(asctime)s - %(levelname)s - %(message)s'
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        level=logging.INFO
     )
     app = TinkerApp()
     app.mainloop()
