@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import sys
+import websockets
+import multiprocessing
 
 class TinkerApp(tk.Tk):
     def __init__(self):
@@ -27,10 +29,10 @@ class TinkerApp(tk.Tk):
         
         # Setup the sizing
         self.rowconfigure(1, weight=1)
-        self.rowconfigure(2, weight=2)
-        self.rowconfigure(3, weight=1)
-        for c in range(3): # col configure
-            self.columnconfigure(c, weight=2)
+        self.rowconfigure(2, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=2)
+        self.columnconfigure(3, weight=1)
         
     def slider_changed(self, value):
         # Update the slider indicator label
@@ -60,8 +62,13 @@ class TinkerApp(tk.Tk):
 
 
     def mainloop(self, n: int = 0) -> None:
-        self.after_idle(lambda: self.on_start())
+        self.after(500, self.on_start)
+        self.after_idle(self.ws_server_process)
         return super().mainloop(n)
+    
+    async def ws_server_process():
+        
+        pass
 
 if __name__ == "__main__":
     argc, argv = (len(sys.argv), sys.argv)
