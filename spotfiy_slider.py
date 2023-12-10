@@ -26,10 +26,11 @@ class TinkerApp(tk.Tk):
         self.pinned = False
         
         # Setup the sizing
-        for r in range(2): # row sizing
-            self.rowconfigure(r, weight=1)
-        for c in range(2): # col configure
-            self.columnconfigure(c, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=2)
+        self.rowconfigure(3, weight=1)
+        for c in range(3): # col configure
+            self.columnconfigure(c, weight=2)
         
     def slider_changed(self, value):
         # Update the slider indicator label
@@ -50,13 +51,12 @@ class TinkerApp(tk.Tk):
 
     def on_start(self):
         h = self.winfo_height(); w = self.winfo_width()
-        inc_w = 2
+        inc_w = 2.5
         inc_h = 2
         self.minsize(w, h)
         h *= inc_h; w *= inc_w
-        self.aspect(minDenom=2, maxDenom=6)
+        h = int(h); w = int(w)
         self.maxsize(w, h)
-        self.sizefrom("program")
 
 
     def mainloop(self, n: int = 0) -> None:
