@@ -52,6 +52,7 @@ class TinkerApp(tk.Tk):
         h = self.winfo_height(); w = self.winfo_width()
         inc_w = 2
         inc_h = 2
+        self.minsize(w, h)
         h *= inc_h; w *= inc_w
         self.aspect(minDenom=2, maxDenom=6)
         self.maxsize(w, h)
