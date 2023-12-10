@@ -2,7 +2,9 @@ import tkinter as tk
 from tkinter import ttk
 import sys
 import websockets
+import asyncio
 import multiprocessing
+import logging
 
 class TinkerApp(tk.Tk):
     def __init__(self):
@@ -66,14 +68,26 @@ class TinkerApp(tk.Tk):
         self.after_idle(self.ws_server_process)
         return super().mainloop(n)
     
-    async def ws_server_process():
-        
-        pass
+    async def ws_server_process(self):
+        async def handler(ws: websockets.WebSocketServerProtocol, p):
+            async for m in ws:
+                if m == "connected":
+                    ws.send("get-volume")
+                elif m.startswith("set-vol:"):
+                    vol = m[8:11]
+                    self.slider.set(float(vol))
+                elif m == "get-vol":
+                    ws.send("vol:" + str(int(self.slider.get())) )
+                    
+        self.server = await websockets.serve(handler, "localhost", 13337)
 
 if __name__ == "__main__":
     argc, argv = (len(sys.argv), sys.argv)
 
-    
+    logging.basicConfig(
+        filename="spotify-slider.log",
+        format='%(asctime)s - %(levelname)s - %(message)s'
+    )
     app = TinkerApp()
     app.mainloop()
 
