@@ -58,8 +58,6 @@ class TinkerApp(tk.Tk):
         self.sizefrom("program")
 
 
-    
-    
     def mainloop(self, n: int = 0) -> None:
         self.after_idle(lambda: self.on_start())
         return super().mainloop(n)
