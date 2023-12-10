@@ -14,7 +14,7 @@ class TinkerApp(tk.Tk):
 
         # Slider
         self.slider = ttk.Scale(self, from_=0, to=100, orient="horizontal", command=self.slider_changed)
-        self.slider.grid(columnspan=3, row=1, column=1)
+        self.slider.grid(columnspan=3, row=1)
 
         # Slider Indicator Label
         self.slider_label = tk.Label(self, text="Volume: 0%")
