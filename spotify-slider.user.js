@@ -48,6 +48,11 @@
             }
         }
 
+        socket.onerror = function (ev) {
+            console.log("******** WebSocket Error: ********");
+            console.error(ev);
+        }
+
         socket.onclose = function(event) {
             console.log('WebSocket connection closed:', event);
             didConnected = false;
