@@ -64,43 +64,14 @@ class TinkerApp(tk.Tk):
         h *= inc_h; w *= inc_w
         h = int(h); w = int(w)
         self.maxsize(w, h)
-        self.after_idle(self.ws_server_process)
 
     def mainloop(self, n: int = 0) -> None:
         self.after(1000, self.on_start)
         return super().mainloop(n)
     
-    def ws_server_process(self):
-        print("inside ws_server-proces")
-        async def socket_handler(ws: websockets.WebSocketServerProtocol, p):
-            nonlocal self
-            
-            async def ping_pong(): 
-                while asyncio.ensure_future():
-                    await ws.ping()
-                    asyncio.ensure_future(ws.pong())
-                    await asyncio.sleep(1)
-            asyncio.ensure_future(ping_pong())
-            
-            async for m in ws:
-                if m == "connected":
-                    ws.send("get-volume")
-                elif m.startswith("set-vol:"):
-                    vol = m[8:11]
-                    self.slider.set(float(vol))
-                elif m == "get-vol":
-                    ws.send("vol:" + str(int(self.slider.get())) )
-            
-            async def callback():
-                print("cb")
-                async with websockets.serve(socket_handler, "localhost", 13337) as ws_s:
-                    print("Serving websocket at ws://localhost:13337")
-            asyncio.ensure_future(callback())
-            print("Started websocket process")
-            
-        
 
-if __name__ == "__main__":
+
+async def main(TinkerApp):
     argc, argv = (len(sys.argv), sys.argv)
 
     logging.basicConfig(
@@ -110,6 +81,32 @@ if __name__ == "__main__":
             logging.StreamHandler(sys.stderr)
         ]
     )
+    
     app = TinkerApp()
-    app.mainloop()
+    app.after_idle(app.mainloop)
+    
+    async def wss_handler(ws: websockets.WebSocketServerProtocol, p):
+        async def ping_pong(): 
+            while asyncio.ensure_future():
+                await ws.ping()
+                asyncio.ensure_future(ws.pong())
+                await asyncio.sleep(1)
+        asyncio.ensure_future(ping_pong())
+        
+        async for m in ws:
+            if m == "connected":
+                ws.send("get-volume")
+            elif m.startswith("set-vol:"):
+                vol = m[8:11]
+                app.slider.set(float(vol))
+            elif m == "get-vol":
+                ws.send("vol:" + str(int(app.slider.get())) )
+        
+    wss = await websockets.serve(wss_handler, "localhost", 13337)
+    wss.serve_forever()
+    print("Serving websocket at ws://localhost:13337")
+    
 
+if __name__ == "__main__":
+    asyncio.run(main(TinkerApp))
+    
