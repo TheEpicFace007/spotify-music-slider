@@ -13,8 +13,7 @@ async def wait_print(s, msg):
     print("******==>"+repr(msg)+"<==******")
 class TinkerApp(tk.Tk):
     def __init__(self):
-        super().__init__(
-        )
+        super().__init__()
         self.title("Spotify music slider")
 
         # Slider
@@ -71,26 +70,17 @@ class TinkerApp(tk.Tk):
     
 
 
-async def main(TinkerApp):
+async def main(TinkerApp: tk.Tk):
     argc, argv = (len(sys.argv), sys.argv)
-
-    logging.basicConfig(
-        format='%(asctime)s - %(levelname)s - %(message)s',
-        level=logging.INFO,
-        stream=[
-            logging.StreamHandler(sys.stderr)
-        ]
-    )
     
     app = TinkerApp()
     app.after_idle(app.mainloop)
     
     async def wss_handler(ws: websockets.WebSocketServerProtocol, p):
         async def ping_pong(): 
-            while asyncio.ensure_future():
-                await ws.ping()
-                asyncio.ensure_future(ws.pong())
-                await asyncio.sleep(1)
+            while await asyncio.sleep(1):
+                p = [ws.ping(), ws.pong()]
+                await asyncio.gather(*p)
         asyncio.ensure_future(ping_pong())
         
         async for m in ws:
@@ -101,10 +91,9 @@ async def main(TinkerApp):
                 app.slider.set(float(vol))
             elif m == "get-vol":
                 ws.send("vol:" + str(int(app.slider.get())) )
-        
-    wss = await websockets.serve(wss_handler, "localhost", 13337)
-    wss.serve_forever()
-    print("Serving websocket at ws://localhost:13337")
+    
+    wss = websockets.serve(wss_handler, "localhost", 13337)
+    asyncio.ensure_future(wss)
     
 
 if __name__ == "__main__":
