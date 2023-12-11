@@ -1,3 +1,4 @@
+import threading
 import tkinter as tk
 from tkinter import ttk
 import sys
@@ -5,6 +6,12 @@ import websockets
 import asyncio
 import multiprocessing
 import logging
+
+
+async def ping_pong(ws_server: websockets.ServerProtocol):
+    while await asyncio.sleep(1):
+        await ws_server.send_ping(b"")
+
 
 class TinkerApp(tk.Tk):
     def __init__(self):
@@ -61,30 +68,40 @@ class TinkerApp(tk.Tk):
         h *= inc_h; w *= inc_w
         h = int(h); w = int(w)
         self.maxsize(w, h)
-
+        threading.Thread(None, target=self.run_ws_server).start()
 
 
     def mainloop(self, n: int = 0) -> None:
         self.after(500, self.on_start)
         return super().mainloop(n)
     
-    async def ws_server_process(self):
-        async def handler(ws: websockets.WebSocketServerProtocol, p):
+    
+    def run_ws_server(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self.ws_server_process(loop))
+    
+    async def ws_server_process(self, loop: asyncio.BaseEventLoop):
+        async def wss_handler(ws: websockets.WebSocketServerProtocol):
+            asyncio.ensure_future(ping_pong(ws))
             async for m in ws:
+                await ws.ensure_open()
                 if m == "connected":
                     ws.send("get-volume")
                 elif m.startswith("set-vol:"):
                     vol = m[8:11]
-                    self.slider.set(float(vol))
+                    loop.call_soon_threadsafe(self.set_vol_slider, vol)
                 elif m == "get-vol":
                     ws.send("vol:" + str(int(self.slider.get())) )
-        
-        print("test")
-        self.server = await websockets.serve(handler, "localhost", 13337)
-        logging.info("Launched WS server")
 
+        def set_vol_slider(self, vol):
+            self.slider.set(float(vol))
+        
+        
+        async with websockets.serve(wss_handler, "localhost", 13337) as wss:
+            await asyncio.Future()
+            
 if __name__ == "__main__":
-    asyncio.run(main(TinkerApp))
     
     argc, argv = (len(sys.argv), sys.argv)
 
