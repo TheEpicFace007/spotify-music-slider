@@ -93,13 +93,15 @@ class TinkerApp(tk.Tk):
                     loop.call_soon_threadsafe(self.set_vol_slider, vol)
                 elif m == "get-vol":
                     ws.send("vol:" + str(int(self.slider.get())) )
-
-        def set_vol_slider(self, vol):
-            self.slider.set(float(vol))
-        
-        
+                    
         async with websockets.serve(wss_handler, "localhost", 13337) as wss:
             await asyncio.Future()
+                    
+    def set_vol_slider(self, vol):
+        self.slider.set(float(vol))
+        
+        
+      
             
 if __name__ == "__main__":
     
