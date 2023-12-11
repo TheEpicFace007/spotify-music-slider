@@ -6,7 +6,7 @@
 // @author       Charlie
 // @match        http*://open.spotify.com/*
 // @grant        GM_xmlhttpRequest
-// @license      GPL-3.0
+// @license      AGPL-3.0
 // ==/UserScript==
 
 (function() {
@@ -22,7 +22,7 @@
         const socket = new WebSocket(wsServerURL);
 
         socket.onopen = function(event) {
-            console.log('WebSocket connection opened:');
+            console.log('WebSocket connection opened 🆗');
             // You can send a message after the connection is established, if needed
             // socket.send('connected');
             didConnected = true;
@@ -33,6 +33,11 @@
                 }
                 console.log("Sucessfully reconnected")
             }
+            setInterval(() => {
+                if (socket.readyState !== socket. ){
+                    
+                }
+            }, 50)
         }
 
         socket.onmessage = function(event) {
@@ -51,6 +56,7 @@
         socket.onerror = function (ev) {
             console.log("******** WebSocket Error: ********");
             console.error(ev);
+            console.log("*****************ERROR*****************")
         }
 
         socket.onclose = function(event) {
@@ -60,7 +66,7 @@
 
             connectIntervalLoop = setInterval(() => {
                 console.log("Attempting to reconnect...");
-                if (didConnected !== null || didConnected !== undefined ){
+                if (!didConnected && connectIntervalLoop !== null){
                     connectWebSocket();
                 }
             }, 10_000);
@@ -73,4 +79,33 @@
         // }
     });
 
+    function formatWSMessage({ mType, arg }){
+        arg ??= null
+        const subMType = mType.substring(0, 8);
+        const volType = ["set-vol", "get-vol", "set-vol:", "connected"];
+
+        switch (subMType){
+        // set volume
+        case volType[0]:
+        case volType[2]:
+            {
+                if (!arg && typeof arg != "number"){
+                    throw TypeError(`arg must be a number, provided arg type: ${typeof arg}`)
+                }
+                return `set-vol:${arg}`
+            }
+        // get volume
+        case volType[1]:
+            {
+                return "get-vol"
+            }
+        // connectced
+        case volType[3]:
+            {
+                return "connected"
+            }
+        default:
+            throw ReferenceError("mType can be " + volType.toString())
+        }
+    }
 })();
