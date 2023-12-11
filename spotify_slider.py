@@ -4,16 +4,14 @@ import sys
 import websockets
 import asyncio
 import multiprocessing
-import threading
 import logging
-import time
 
-async def wait_print(s, msg):
-    asyncio.sleep(s)
-    print("******==>"+repr(msg)+"<==******")
 class TinkerApp(tk.Tk):
     def __init__(self):
-        super().__init__()
+        super().__init__(
+            screenName="spotify_slider",
+            baseName="spotify_slider"
+        )
         self.title("Spotify music slider")
 
         # Slider
@@ -27,7 +25,7 @@ class TinkerApp(tk.Tk):
         # Pin/Unpin Button
         self.pin_button = tk.Button(self, text="Pin", command=self.toggle_pin)
         self.pin_button.grid(row=2, column=2, columnspan=3)
-        
+
         # Initialize pinned state
         self.pinned = False
         
@@ -64,38 +62,37 @@ class TinkerApp(tk.Tk):
         h = int(h); w = int(w)
         self.maxsize(w, h)
 
+
+
     def mainloop(self, n: int = 0) -> None:
-        self.after(1000, self.on_start)
+        self.after(500, self.on_start)
         return super().mainloop(n)
     
-
-
-async def main(TinkerApp: tk.Tk):
-    argc, argv = (len(sys.argv), sys.argv)
-    
-    app = TinkerApp()
-    app.after_idle(app.mainloop)
-    
-    async def wss_handler(ws: websockets.WebSocketServerProtocol, p):
-        async def ping_pong(): 
-            while await asyncio.sleep(1):
-                p = [ws.ping(), ws.pong()]
-                await asyncio.gather(*p)
-        asyncio.ensure_future(ping_pong())
+    async def ws_server_process(self):
+        async def handler(ws: websockets.WebSocketServerProtocol, p):
+            async for m in ws:
+                if m == "connected":
+                    ws.send("get-volume")
+                elif m.startswith("set-vol:"):
+                    vol = m[8:11]
+                    self.slider.set(float(vol))
+                elif m == "get-vol":
+                    ws.send("vol:" + str(int(self.slider.get())) )
         
-        async for m in ws:
-            if m == "connected":
-                ws.send("get-volume")
-            elif m.startswith("set-vol:"):
-                vol = m[8:11]
-                app.slider.set(float(vol))
-            elif m == "get-vol":
-                ws.send("vol:" + str(int(app.slider.get())) )
-    
-    wss = websockets.serve(wss_handler, "localhost", 13337)
-    asyncio.ensure_future(wss)
-    
+        print("test")
+        self.server = await websockets.serve(handler, "localhost", 13337)
+        logging.info("Launched WS server")
 
 if __name__ == "__main__":
     asyncio.run(main(TinkerApp))
     
+    argc, argv = (len(sys.argv), sys.argv)
+
+    logging.basicConfig(
+        filename="spotify-slider.log",
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        level=logging.INFO
+    )
+    app = TinkerApp()
+    app.mainloop()
+
